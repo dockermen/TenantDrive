@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ drive_info.provider_name }} 扫码登录</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 20px 15px;
+        }
+        .card {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            border: none;
+            background-color: white;
+        }
+        .card-body {
+             padding: 2rem;
+        }
+        .footer {
+            text-align: center;
+            padding: 15px;
+            background-color: #e9ecef;
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+        .header-info {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .header-info span {
+            margin: 0 8px;
+            white-space: nowrap;
+        }
+         .header-info .value {
+            color: #0d6efd;
+            font-weight: 500;
+            margin-left: 4px;
+        }
+        .scan-area {
+            position: relative;
+            width: 100%;
+            padding-top: 75%;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #f8f9fa;
+        }
+        #camera-container, #scan-placeholder, #scan-result {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        #camera-container {
+            display: none;
+            padding: 0;
+        }
+        #scan-result {
+             display: none;
+        }
+        #scan-placeholder p {
+             margin-bottom: 0.5rem;
+             color: #6c757d;
+        }
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #canvas {
+            display: none;
+        }
+        .card-title {
+            text-align: center;
+            color: #343a40;
+            font-weight: 600;
+            font-size: 1.5rem;
+            margin-bottom: 0;
+        }
+        .btn {
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .btn-primary {
+             background-color: #0d6efd;
+             border-color: #0d6efd;
+        }
+        .btn-danger {
+             background-color: #dc3545;
+             border-color: #dc3545;
+        }
+        
+        @media (max-width: 576px) {
+            .card-body {
+                padding: 1.5rem;
+            }
+            .card-title {
+                font-size: 1.25rem;
+            }
+            .header-info {
+                font-size: 0.8rem;
+            }
+            .btn {
+                font-size: 0.9rem;
+                padding: 0.6rem 0.8rem;
+            }
+            .scan-area {
+                 margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container main-content">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 col-xl-5">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ drive_info.provider_name }}扫码登录</h5>
+                        
+                        <div class="header-info">
+                            <span>
+                                <i class="bi bi-arrow-repeat"></i> 剩余次数:<span class="value" id="remaining-count">{{ remaining_count }}</span>
+                            </span>
+                            <span>
+                                <i class="bi bi-clock"></i> 剩余时间:<span class="value" id="countdown">计算中...</span>
+                            </span>
+                        </div>
+                        
+                        <div class="scan-area">
+                            <div id="camera-container">
+                                <video id="video" playsinline></video>
+                                <canvas id="canvas"></canvas>
+                            </div>
+                            <div id="scan-placeholder">
+                                <i class="bi bi-qr-code-scan fs-1 text-muted mb-3"></i>
+                                <p class="mb-1 fw-bold">点击下方按钮启动扫码</p>
+                                <p class="text-muted small">请将摄像头对准{{ drive_info.provider_name }} PC端的二维码</p>
+                            </div>
+                            <div id="scan-result">
+                                <i class="bi bi-check-circle-fill fs-1 text-success mb-3"></i>
+                                <p class="text-success fw-bold mb-2">扫码成功！</p>
+                                <div id="result-content" class="text-center text-muted"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" id="scan-button">
+                                <i class="bi bi-camera-video me-1"></i>开始扫码
+                            </button>
+                            <button class="btn btn-danger" id="stop-button" style="display: none;">
+                                <i class="bi bi-stop-circle me-1"></i>停止扫码
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <div class="container">
+            <p class="mb-0">TenantDrive &copy; 2025</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const scanButton = document.getElementById('scan-button');
+            const stopButton = document.getElementById('stop-button');
+            const cameraContainer = document.getElementById('camera-container');
+            const scanPlaceholder = document.getElementById('scan-placeholder');
+            const scanResult = document.getElementById('scan-result');
+            const resultContent = document.getElementById('result-content');
+            const remainingCountEl = document.getElementById('remaining-count');
+            const countdownEl = document.getElementById('countdown');
+            
+            let scanning = false;
+            let stream = null;
+            let qrCodeToken = null;
+            
+            let remainingCount = parseInt("{{ remaining_count }}") || 0;
+            
+            const expiryTimeString = "{{ expiry_time }}";
+            const expiryTime = expiryTimeString ? new Date(expiryTimeString) : null;
+            
+            let countdownInterval = null;
+
+            function updateCountdown() {
+                if (!expiryTime || isNaN(expiryTime.getTime())) {
+                    countdownEl.textContent = "未设置";
+                    return;
+                }
+
+                const now = new Date();
+                const diff = expiryTime - now;
+                
+                if (diff <= 0) {
+                    countdownEl.textContent = "已过期";
+                    if(countdownInterval) clearInterval(countdownInterval);
+                    scanButton.disabled = true;
+                    scanButton.classList.add('disabled');
+                    return;
+                }
+                
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                let timeText = ""; 
+                if (days > 0) {
+                    timeText += `${days}天`;
+                }
+                timeText += `${String(hours).padStart(2, '0')}时${String(minutes).padStart(2, '0')}分${String(seconds).padStart(2, '0')}秒`;
+                
+                countdownEl.textContent = timeText;
+            }
+            
+            updateCountdown();
+            
+            if (expiryTime && !isNaN(expiryTime.getTime())) {
+                 countdownInterval = setInterval(updateCountdown, 1000);
+            }
+            
+            function showMessage(message, type = 'info') {
+                const messageContainer = document.body;
+                const messageDiv = document.createElement('div');
+                let bgColor = 'bg-info';
+                let textColor = 'text-white';
+                switch(type) {
+                    case 'success': bgColor = 'bg-success'; break;
+                    case 'error':   bgColor = 'bg-danger'; break;
+                    case 'warning': bgColor = 'bg-warning'; textColor = 'text-dark'; break;
+                }
+
+                messageDiv.className = `alert ${bgColor} ${textColor} position-fixed top-0 start-50 translate-middle-x mt-3 p-2 rounded shadow-sm fade show`;
+                messageDiv.style.zIndex = '1055';
+                messageDiv.style.minWidth = '200px';
+                messageDiv.style.textAlign = 'center';
+                messageDiv.setAttribute('role', 'alert');
+                messageDiv.textContent = message;
+                messageContainer.appendChild(messageDiv);
+                
+                setTimeout(() => {
+                    messageDiv.classList.remove('show');
+                    setTimeout(() => messageDiv.remove(), 150); 
+                }, 3000);
+                
+                console.log(`${type}: ${message}`);
+            }
+            
+            scanButton.addEventListener('click', startScanning);
+            
+            stopButton.addEventListener('click', stopScanning);
+            
+            function startScanning() {
+                if (scanning) return;
+                
+                if (remainingCount <= 0) {
+                    showMessage('剩余次数已用完，无法继续扫码', 'warning');
+                    return;
+                }
+                 if (!expiryTime || isNaN(expiryTime.getTime()) || expiryTime <= new Date()) {
+                    showMessage('此外链已过期或无效，无法扫码', 'warning');
+                    return;
+                }
+                
+                cameraContainer.style.display = 'flex';
+                scanPlaceholder.style.display = 'none';
+                scanResult.style.display = 'none';
+                scanButton.style.display = 'none';
+                stopButton.style.display = 'block';
+                
+                navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    } 
+                })
+                .then(function(mediaStream) {
+                    stream = mediaStream;
+                    video.srcObject = mediaStream;
+                    video.setAttribute('playsinline', true);
+                    video.play();
+                    scanning = true;
+                    requestAnimationFrame(tick);
+                })
+                .catch(function(error) {
+                    console.error('无法访问摄像头: ', error);
+                    if (error.name === 'NotAllowedError') {
+                        showMessage('请授予摄像头访问权限', 'error');
+                    } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                        showMessage('未找到可用的摄像头设备', 'error');
+                    } else {
+                         showMessage('无法启动摄像头', 'error');
+                    }
+                    resetScanUI();
+                });
+            }
+            
+            function stopScanning() {
+                if (!scanning) return;
+                
+                if (stream) {
+                    stream.getTracks().forEach(track => {
+                        track.stop();
+                    });
+                    stream = null;
+                }
+                
+                scanning = false;
+                resetScanUI();
+            }
+            
+            function resetScanUI() {
+                cameraContainer.style.display = 'none';
+                scanPlaceholder.style.display = 'flex';
+                scanResult.style.display = 'none';
+                stopButton.style.display = 'none';
+                scanButton.style.display = 'block';
+                if (remainingCount > 0 && expiryTime && expiryTime > new Date()) {
+                    scanButton.disabled = false;
+                    scanButton.classList.remove('disabled');
+                }
+            }
+            
+            function tick() {
+                if (!scanning || !video.srcObject || video.paused || video.ended) return;
+                
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "dontInvert",
+                    });
+                    
+                    if (code && code.data) {
+                        handleScanResult(code.data);
+                        stopScanning();
+                        return;
+                    }
+                }
+                
+                requestAnimationFrame(tick);
+            }
+            
+            function handleScanResult(data) {
+                cameraContainer.style.display = 'none';
+                scanPlaceholder.style.display = 'none';
+                scanResult.style.display = 'flex';
+                resultContent.textContent = "正在验证...";
+                
+                try {
+                    const urlParams = new URLSearchParams(data.substring(data.indexOf('?') + 1));
+                    qrCodeToken = urlParams.get('token');
+
+                    if (qrCodeToken) { 
+                        callLoginAPI(qrCodeToken);
+                    } else {
+                        console.error("无法从二维码中提取token: ", data);
+                        showMessage("二维码格式无效或无法识别", 'error');
+                        resultContent.textContent = "二维码格式无效";
+                        setTimeout(resetScanUI, 2000);
+                    }
+                } catch (e) {
+                    console.error("处理二维码内容失败:", e, "Data:", data);
+                    showMessage("处理二维码内容失败", 'error');
+                    resultContent.textContent = "无法处理扫描内容";
+                    setTimeout(resetScanUI, 2000);
+                }
+            }
+            
+            function callLoginAPI(token) {
+                resultContent.textContent = "正在登录...";
+                
+                fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json; charset=utf-8"
+                    },
+                    body: JSON.stringify({"token": token, "link_uuid": "{{ link_info.link_uuid }}"}),
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errData => {
+                            throw new Error(errData.message || `HTTP error! status: ${response.status}`);
+                        }).catch(() => {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.status) {
+                        remainingCount--;
+                        remainingCountEl.textContent = parseInt(remainingCount);
+                        resultContent.textContent = "登录成功！";
+                        showMessage("登录成功！", 'success');
+                        
+                        if (remainingCount <= 0) {
+                            scanButton.disabled = true;
+                            scanButton.classList.add('disabled');
+                            showMessage("剩余次数已用完", 'warning');
+                        }
+                    } else {
+                        resultContent.textContent = "登录失败: " + (data.message || "未知错误");
+                        showMessage("登录失败: " + (data.message || "未知错误"), 'error');
+                        setTimeout(resetScanUI, 3000);
+                    }
+                })
+                .catch(error => {
+                    console.error("登录请求失败:", error);
+                    resultContent.textContent = "登录请求失败";
+                    showMessage(`登录请求失败: ${error.message}`, 'error');
+                    setTimeout(resetScanUI, 3000);
+                });
+            }
+            
+            if (remainingCount <= 0) {
+                 scanButton.disabled = true;
+                 scanButton.classList.add('disabled');
+                 showMessage("此链接剩余次数已用完", "warning");
+            }
+            if (expiryTime && expiryTime <= new Date()) {
+                 scanButton.disabled = true;
+                 scanButton.classList.add('disabled');
+            }
+        });
+    </script>
+</body>
+</html> 

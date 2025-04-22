@@ -7,7 +7,6 @@ from flask import Flask, render_template, request, redirect, url_for, session,ma
 from flask.views import MethodView
 from werkzeug.routing import BaseConverter
 from utils.login import login_quark
-from utils.tools import get_cnb_weburl
 from utils.database import CloudDriveDatabase
 from datetime import datetime, timezone
 import logging
@@ -500,9 +499,6 @@ def get_statistics_data():
 #      应用程序运行入口
 # -----------------------------
 if __name__ == '__main__':
-        # 启动Flask应用
-    weburl = get_cnb_weburl(5000)
-    print("Run_url:",weburl)
     app.config.from_pyfile("config.py")
     app.run(host="0.0.0.0")
     
