@@ -1,13 +1,8 @@
-<<<<<<< HEAD
-# TenantDrive
-网盘租户系统
-=======
 # TenantDrive [网盘租户系统]
 
 
 
 ## 功能
-
 
 
 * [x] 网盘驱动
@@ -20,5 +15,4 @@
 
 ## 流程图
 
-![image-20250422111619909](.\README.assets\image-20250422111619909.png)
->>>>>>> 782ff18 (添加README)
+![image-20250422111619909](README.assets/image-20250422111619909.png)
