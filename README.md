@@ -20,5 +20,5 @@
 
 ## 流程图
 
-![image-20250422111619909](.\README.assets\image-20250422111619909.png)
+![image-20250422111619909](README.assets\image-20250422111619909.png)
 >>>>>>> 782ff18 (添加README)
